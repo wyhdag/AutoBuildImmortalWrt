@@ -28,14 +28,15 @@ on:
         description: "宽带账号 (若启用PPPoE)"
         required: false
       pppoe_password:
-        description: "宽带密码 (若启用PPPoE)"
+        type: "宽带密码 (若启用PPPoE)"
         required: false
       version:
         description: "选择要使用的版本"
         required: true
-        default: 'x86-64-master'
+        default: 'no'
         type: choice
         options:
+          - 'x86-64-master'
           - 'x86-64-snapshot'
           - 'x86-64-24.10-SNAPSHOT'
           - 'x86-64-openwrt-24.10'
