@@ -36,9 +36,6 @@ on:
         default: 'no'
         type: choice
         options:
-          - 'x86-64-master'
-          - 'x86-64-snapshot'
-          - 'x86-64-24.10-SNAPSHOT'
           - 'x86-64-openwrt-24.10'
 
         
