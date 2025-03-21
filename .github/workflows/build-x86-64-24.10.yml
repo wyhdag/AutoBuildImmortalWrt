@@ -28,17 +28,8 @@ on:
         description: "宽带账号 (若启用PPPoE)"
         required: false
       pppoe_password:
-        type: "宽带密码 (若启用PPPoE)"
+        description: "宽带密码 (若启用PPPoE)"
         required: false
-      version:
-        description: "选择要使用的版本"
-        required: true
-        default: 'no'
-        type: choice
-        options:
-          - 'x86-64-openwrt-24.10'
-
-        
 
 jobs:
   build:
@@ -81,7 +72,7 @@ jobs:
               -e ENABLE_PPPOE=${{ inputs.enable_pppoe }} \
               -e PPPOE_ACCOUNT=${{ inputs.pppoe_account }} \
               -e PPPOE_PASSWORD=${{ inputs.pppoe_password }} \
-              immortalwrt/imagebuilder:${version} /bin/bash /home/build/immortalwrt/build.sh
+              immortalwrt/imagebuilder:x86-64-master /bin/bash /home/build/immortalwrt/build.sh
               
           done
 
