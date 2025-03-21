@@ -30,6 +30,17 @@ on:
       pppoe_password:
         description: "宽带密码 (若启用PPPoE)"
         required: false
+      version:
+        description: "选择要使用的版本"
+        required: true
+        default: 'x86-64-master'
+        type: choice
+        options:
+          - 'x86-64-snapshot'
+          - 'x86-64-24.10-SNAPSHOT'
+          - 'x86-64-openwrt-24.10'
+
+        
 
 jobs:
   build:
@@ -72,7 +83,8 @@ jobs:
               -e ENABLE_PPPOE=${{ inputs.enable_pppoe }} \
               -e PPPOE_ACCOUNT=${{ inputs.pppoe_account }} \
               -e PPPOE_PASSWORD=${{ inputs.pppoe_password }} \
-              immortalwrt/imagebuilder:x86-64-openwrt-24.10.0 /bin/bash /home/build/immortalwrt/build.sh
+              immortalwrt/imagebuilder:${version} /bin/bash /home/build/immortalwrt/build.sh
+              
           done
 
       - name: Generate Firmware SHA-256
@@ -103,4 +115,3 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
