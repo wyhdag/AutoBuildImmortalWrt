@@ -86,16 +86,20 @@ jobs:
       - name: Create info
         run: |
           if [ "${{ github.event.inputs.include_docker }}" == "yes" ]; then
-            extra_content="#### 默认带docker"
+            extra_content="#### 默认不带docker"
             echo -e "\n $extra_content" >> ${{ github.workspace }}/info.md
           else
             echo -e "NO docker"
           fi
 
+      - name: Generate Date and Time Tag
+        id: datetime_tag
+        run: echo "TAG_NAME=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+
       - name: Upload ImmortWrt as release assets
         uses: softprops/action-gh-release@v2.2.1
         with:
-          tag_name: Autobuild-x86-64
+          tag_name: ${{ steps.datetime_tag.outputs.TAG_NAME }}
           body_path: ${{ github.workspace }}/info.md
           files: |
             ${{ github.workspace }}/*squashfs-combined-efi.img.gz
@@ -104,12 +108,65 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete Old Releases
-        uses: dev-drprasad/delete-older-releases@master
+      - name: Delete Old Releases (using github-script)
+        uses: actions/github-script@v6
         with:
-          keep_latest: 2
-          delete_tags: true  
-          token: ${{ secrets.GITHUB_TOKEN }} 
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            async function getReleases(owner, repo) {
+              const { data: releases } = await github.rest.repos.listReleases({
+                owner,
+                repo,
+                per_page: 100, // Adjust as needed
+              });
+              return releases;
+            }
+
+            async function deleteRelease(owner, repo, release_id) {
+              try {
+                await github.rest.repos.deleteRelease({
+                  owner,
+                  repo,
+                  release_id,
+                });
+                console.log(`Deleted release ${release_id}`);
+              } catch (error) {
+                console.error(`Failed to delete release ${release_id}: ${error}`);
+              }
+            }
+
+            async function deleteTag(owner, repo, tag_name) {
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `tags/${tag_name}`,
+                });
+                console.log(`Deleted tag ${tag_name}`);
+              } catch (error) {
+                console.error(`Failed to delete tag ${tag_name}: ${error}`);
+              }
+            }
+
+            async function main() {
+              const releases = await getReleases(owner, repo);
+              const currentTag = "${{ steps.datetime_tag.outputs.TAG_NAME }}";
+
+              for (const release of releases) {
+                  if (release.tag_name !== currentTag) {
+                      // Delete only releases that are not the current one
+                      await deleteRelease(owner, repo, release.id);
+                      await deleteTag(owner, repo, release.tag_name);
+                  } else {
+                      console.log(`Skipping deletion of current release and tag: ${currentTag}`);
+                  }
+              }
+            }
+
+            await main();
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@main
