@@ -42,7 +42,6 @@ jobs:
       - name: Set executable permissions
         run: chmod +x ${{ github.workspace }}/x86-64/build.sh
 
-
       - name: Validate PPPoE Inputs
         run: |
           if [[ "${{ inputs.enable_pppoe }}" == "yes" ]]; then
@@ -57,10 +56,10 @@ jobs:
           profiles="${{ github.event.inputs.profile }}"
           include_docker="${{ github.event.inputs.include_docker }}"
           IFS=',' read -r -a profile_array <<< "$profiles"
-          
+
           for profile in "${profile_array[@]}"; do
             echo "Building for profile: $profile"
-            
+
             docker run --rm -i \
               --user root \
               -v "${{ github.workspace }}/bin:/home/build/immortalwrt/bin" \
@@ -73,7 +72,7 @@ jobs:
               -e PPPOE_ACCOUNT=${{ inputs.pppoe_account }} \
               -e PPPOE_PASSWORD=${{ inputs.pppoe_password }} \
               immortalwrt/imagebuilder:x86-64-24.10-SNAPSHOT /bin/bash /home/build/immortalwrt/build.sh
-              
+
           done
 
       - name: Generate Firmware SHA-256
@@ -104,11 +103,18 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
+      - name: Delete Old Releases
+        uses: dev-drprasad/delete-older-releases@master
+        with:
+          keep_latest: 2
+          delete_tags: true  
+          token: ${{ secrets.GITHUB_TOKEN }} 
+
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@main
         with:
-          retain_days: 5
-          keep_minimum_runs: 2
+          retain_days: 3
+          keep_minimum_runs: 1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
