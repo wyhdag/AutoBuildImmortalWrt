@@ -86,7 +86,7 @@ jobs:
       - name: Create info
         run: |
           if [ "${{ github.event.inputs.include_docker }}" == "yes" ]; then
-            extra_content="#### 默认不带docker"
+            extra_content="#### 默认带docker"
             echo -e "\n $extra_content" >> ${{ github.workspace }}/info.md
           else
             echo -e "NO docker"
@@ -108,7 +108,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete Old Releases (using github-script)
+      - name: Delete Old Releases
         uses: actions/github-script@v6
         with:
           script: |
