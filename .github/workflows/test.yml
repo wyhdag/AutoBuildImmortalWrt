@@ -32,12 +32,10 @@ on:
         required: false
 
 env:
-  ALIST_URL: ${{ secrets.ALIST_URL }} # Alist IPv6 地址， 例如： "http://[2001:db8::1]:5244"
+  ALIST_URL: ${{ secrets.ALIST_URL }} 
   ALIST_USERNAME: ${{ secrets.ALIST_USERNAME }}
   ALIST_PASSWORD: ${{ secrets.ALIST_PASSWORD }}
   ALIST_UPLOAD_PATH: ${{ secrets.ALIST_UPLOAD_PATH }}
-  HTTP_PROXY: ${{ secrets.HTTP_PROXY }} # 例如 http://[2001:db8::2]:3128  确保代理支持 IPv6
-  HTTPS_PROXY: ${{ secrets.HTTPS_PROXY }} # 例如 http://[2001:db8::2]:3128 确保代理支持 IPv6
 
 jobs:
   build:
