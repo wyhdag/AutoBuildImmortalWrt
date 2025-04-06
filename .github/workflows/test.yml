@@ -1,4 +1,4 @@
-name: test
+name: build-x86-64-immortalwrt-24.10.0
 
 on:
   workflow_dispatch:
@@ -32,7 +32,7 @@ on:
         required: false
 
 env:
-  ALIST_URL: ${{ secrets.ALIST_URL }} 
+  ALIST_URL: ${{ secrets.ALIST_URL }}
   ALIST_USERNAME: ${{ secrets.ALIST_USERNAME }}
   ALIST_PASSWORD: ${{ secrets.ALIST_PASSWORD }}
   ALIST_UPLOAD_PATH: ${{ secrets.ALIST_UPLOAD_PATH }}
@@ -105,50 +105,16 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install jq
 
-      - name: Test IPv6 Connection to Alist (via Proxy if configured)
-        run: |
-          if [ -n "${{ env.HTTP_PROXY }}" ]; then
-            echo "Testing IPv6 connection to Alist via proxy..."
-            curl -6 -x "${{ env.HTTP_PROXY }}" -I "${{ env.ALIST_URL }}"
-          else
-            echo "Testing direct IPv6 connection to Alist..."
-            curl -6 -I "${{ env.ALIST_URL }}"
-          fi
-
-      - name: Get Alist Token
-        id: get_alist_token
-        run: |
-          ALIST_URL="${{ env.ALIST_URL }}"
-          ALIST_USERNAME="${{ env.ALIST_USERNAME }}"
-          ALIST_PASSWORD="${{ env.ALIST_PASSWORD }}"
-
-          if [ -z "$ALIST_URL" ] || [ -z "$ALIST_USERNAME" ] || [ -z "$ALIST_PASSWORD" ]; then
-            echo "Error: Alist URL, Username, or Password is not set. Skipping token retrieval."
-            exit 1
-          fi
-
-          TOKEN=$(curl -s -X POST \
-            -H "Content-Type: application/json" \
-            -d "{\"username\":\"$ALIST_USERNAME\",\"password\":\"$ALIST_PASSWORD\"}" \
-            "$ALIST_URL/api/auth/login" | jq -r '.data.token')
-
-          if [ -z "$TOKEN" ]; then
-            echo "Error: Failed to retrieve Alist token."
-            exit 1
-          fi
-
-          echo "ALIST_TOKEN=$TOKEN" >> $GITHUB_OUTPUT
-          echo "Alist token retrieved successfully."
-
       - name: Upload to Alist
         if: always()
         run: |
           ALIST_URL="${{ env.ALIST_URL }}"
           ALIST_UPLOAD_PATH="${{ env.ALIST_UPLOAD_PATH }}"
-          ALIST_TOKEN="${{ steps.get_alist_token.outputs.ALIST_TOKEN }}"
+          ALIST_USERNAME="${{ env.ALIST_USERNAME }}"
+          ALIST_PASSWORD="${{ env.ALIST_PASSWORD }}"
 
-          if [ -z "$ALIST_URL" ] || [ -z "$ALIST_TOKEN" ] || [ -z "$ALIST_UPLOAD_PATH" ]; then
-            echo "Error: Alist URL, Token, or Upload Path is not set. Skipping upload."
+          if [ -z "$ALIST_URL" ] || [ -z "$ALIST_USERNAME" ] || [ -z "$ALIST_PASSWORD" ] || [ -z "$ALIST_UPLOAD_PATH" ]; then
+            echo "Error: Alist URL, Username, Password, or Upload Path is not set. Skipping upload."
             exit 0
           fi
 
@@ -156,8 +122,9 @@ jobs:
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               echo "Uploading $filename to Alist..."
+
               curl -X POST \
-                -H "Authorization: Bearer $ALIST_TOKEN" \
+                -u "$ALIST_USERNAME:$ALIST_PASSWORD" \
                 -F "file=@$file" \
                 "$ALIST_URL/api/fs/upload?path=$ALIST_UPLOAD_PATH/$filename"
 
